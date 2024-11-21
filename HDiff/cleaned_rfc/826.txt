@@ -1,0 +1,3 @@
+ether_type$ADDRESS_RESOLUTION.
+ares_hrd$Ethernet (= 1).
+nbytes: (ar$sha) Hardware address of sender of this packet, n from the ar$hln field. mbytes: (ar$spa) Protocol address of sender of this packet, m from the ar$pln field. nbytes: (ar$tha) Hardware address of target of this packet (if known). mbytes: (ar$tpa) Protocol address of target.

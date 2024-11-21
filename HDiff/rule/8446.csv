@@ -1,0 +1,40 @@
+sentences
+"If there is no overlap between the received ""supported_groups"" and the groups supported by the server, then the server MUST abort the handshake with a ""handshake_failure"" or an ""insufficient_security"" alert."
+"In that case, the client MUST send the same ClientHello without modification, except as follows: -  If a ""key_share"" extension was supplied in the HelloRetryRequest, replacing the list of shares with a list containing a single KeyShareEntry from the indicated group."
+"If the list contains cipher suites that the server does not recognize, support, or wish to use, the server MUST ignore those cipher suites and process the remaining ones as usual."
+"If a TLS 1.3 ClientHello is received with any other value in this field, the server MUST abort the handshake with an ""illegal_parameter"" alert."
+"If negotiating a version of TLS prior to 1.3, a server MUST check that the message either contains no data after legacy_compression_methods or that it contains a valid extensions block with no data following."
+"In the event that a client requests additional functionality using extensions and this functionality is not supplied by the server, the client MAY abort the handshake."
+"A client which receives a legacy_session_id_echo field that does not match what it sent in the ClientHello MUST abort the handshake with an ""illegal_parameter"" alert."
+"A client which receives a cipher suite that was not offered MUST abort the handshake with an ""illegal_parameter"" alert."
+TLS 1.3 clients receiving a ServerHello indicating TLS 1.2 or below MUST check that the last 8 bytes are not equal to either of these values.
+TLS 1.2 clients SHOULD also check that the last 8 bytes are not equal to the second value if the ServerHello indicates TLS 1.1 or below.
+A client which receives a cipher suite that was not offered MUST abort the handshake.
+"The server MAY also send unsolicited extensions in the NewSessionTicket, though the client does not respond directly to these."
+"Clients MUST check for this extension prior to processing the rest of the ServerHello (although they will have to extension is present, clients MUST ignore the ServerHello."
+"When sending a HelloRetryRequest, the server MAY provide a ""cookie"" extension to the client (this is an exception to the usual rule that the only extensions that may be sent are those that appear in the ClientHello)."
+"If a server is authenticating via a certificate and the client has not sent a ""signature_algorithms"" extension, then the server MUST abort the handshake with a ""missing_extension"" alert (see Section 9.2)."
+"However, the client MUST ignore and skip any unrecognized certificate extension OIDs."
+"Upon receipt of this extension in a HelloRetryRequest, the client MUST verify that (1) the selected_group field corresponds to a group which was provided in the ""supported_groups"" extension in the original ClientHello and (2) the selected_group field does not correspond to a group which was provided in the ""key_share"" extension in the original ClientHello."
+"If either of these checks fails, then the client MUST abort the handshake with an ""illegal_parameter"" alert."
+"If this check fails, the client MUST abort the handshake with an ""illegal_parameter"" alert."
+"For identities established externally, an obfuscated_ticket_age of 0 SHOULD be used, and servers MUST ignore the value."
+"If no acceptable PSKs are found, the server SHOULD perform a non-PSK handshake if possible."
+"If this value is not present or does not validate, the server MUST abort the handshake."
+"Servers which are authenticating with a PSK MUST NOT send the CertificateRequest message in the main handshake, though they MAY send it in post-handshake authentication (see Section 4.6.2) provided that the client has sent the ""post_handshake_auth"" extension (see Section 4.2.6)."
+"If the server supplies an empty Certificate message, the client MUST abort the handshake with a ""decode_error"" alert."
+"If the server does not send an ""early_data"" extension in EncryptedExtensions, then the client MUST NOT send an EndOfEarlyData message."
+"This message indicates that all 0-RTT application_data messages, if any, have been transmitted and that the Servers MUST NOT send this message, and clients receiving it MUST terminate the connection with an ""unexpected_message"" alert.
+This message creates a unique association between the ticket value and a secret PSK derived from the resumption master secret (see Section 7)."
+The server MUST generate a fresh value for each ticket it sends.
+"A server receiving more than max_early_data_size bytes of 0-RTT data SHOULD terminate the connection with an ""unexpected_message"" alert."
+"Note that servers that reject early data due to lack of cryptographic material will be unable to differentiate padding from content, so clients SHOULD NOT depend on being able to send large quantities of padding in early data records."
+The client and the server must share knowledge that the connection is ending in order to avoid a truncation attack.
+"Sending this alert is OPTIONAL; servers MAY instead choose to send a ""decrypt_error"" alert to merely indicate an invalid PSK identity."
+"The server MUST ensure that any instance of it (be it a machine, a thread, or any other entity within the relevant serving infrastructure) would accept 0-RTT for the same 0-RTT handshake at most once; this limits the number of replays to the number of server instances in the deployment."
+"Such a guarantee can be accomplished by locally recording data from recently received ClientHellos and rejecting repeats, or by any other method that server instance"" guarantee is a minimum requirement; servers SHOULD limit 0-RTT replays further when feasible."
+"Otherwise, the server may fail to interoperate by selecting one of those parameters."
+"-  A server receiving a ClientHello MUST correctly ignore all unrecognized cipher suites, extensions, and other parameters."
+"Forwarded ClientHellos may contain advertisements for features not supported by the middlebox, so the response may include future TLS additions the middlebox does not recognize."
+"If the version chosen by the server is not supported by the client (or is not acceptable), the client MUST abort the handshake with a ""protocol_version"" alert."
+A client that attempts to send 0-RTT data MUST fail a connection if it receives a ServerHello with TLS 1.2 or older.

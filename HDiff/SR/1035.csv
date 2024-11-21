@@ -1,0 +1,80 @@
+sentences
+resource record pertains.
+that the resource record may be cached before the source of the information should again be consulted.
+"Zero values are interpreted to mean that the RR can only be used for the transaction in progress, and should not be cached."
+"For example, SOA records are always distributed with a zero TTL to prohibit caching."
+The owner name is an alias.
+"Note that many existing mailing lists use a mailbox X-request for the RMAILBX field of mailing list X, e.g., Msgroup-request for Msgroup."
+"If this domain name names the root, errors should be returned to the sender of the message."
+authoritative for the specified class and domain.
+failed refresh should be retried.
+The gateway data only reflects the existence of a gateway in a manner equivalent to the current HOSTS.
+due to length greater than that permitted on the transmission channel.
+"If RD is set, it directs the name server to pursue the query recursively."
+"response, and denotes whether recursive query support is available in the name server."
+The values have the following interpretation: 0               No error condition 1               Format error - The name server was unable to interpret the query.
+2               Server failure -
+The name server was unable to process this query due to a problem with the name server.
+"3               Name Error - Meaningful only for responses from an authoritative name server, this code signifies that the domain name referenced in the query does not exist."
+The name server refuses to perform the specified operation for policy reasons.
+"For example, a name server may not wish to provide the information to the particular requester, or a name server may not wish to perform a particular operation (e.g., zone 6-15            Reserved for future use."
+The domain name terminates with the zero length octet for the null label of the root.
+Note that this field may be an odd number of octets; no padding is used.
+"For example, the QCLASS field is IN for the Internet."
+field specifies the meaning of the data in the RDATA field.
+interval (in seconds) that the resource record may be cached before it should be discarded.
+"Zero values are interpreted to mean that the RR can only be used for the transaction in progress, and should not be cached."
+"For example, the if the TYPE is A and the CLASS is IN, the RDATA field is a 4 octet ARPA Internet address."
+The client should try other servers and server addresses before repeating a query to a specific address of a server.
+Too aggressive retransmission can easily slow responses for the community at large.
+"Depending on how well connected the client is to its expected servers, the minimum retransmission interval should be 2-5 seconds."
+"The server should assume that the client will initiate connection closing, and should delay closing its end of the connection until all outstanding client requests have been satisfied."
+"If the server needs to close a dormant connection to reclaim resources, it should wait until the connection has been idle for a period on the order of two minutes."
+used to quote that character so that its special meaning does not apply.
+The resulting octet is assumed to be text and is not checked for special meaning.
+All RRs in the file should have the same class.
+"zone should be glue information, rather than the result of an origin or similar error."
+The catalog structure can be an almost static structure that need change only when the system administrator changes the zones supported by the server.
+The individual data structures for zones allow a zone to be replaced simply by changing a pointer in the catalog.
+"With the proper search procedures, authoritative data in zones will always ""hide"", and hence take precedence over, cached data."
+"- Errors in zone definitions that cause overlapping zones, etc., may cause erroneous responses to queries, but problem determination is simplified, and the contents of one ""bad"" zone can't corrupt another."
+"Since the cache is most frequently updated, it is most vulnerable to corruption during system restarts."
+"zero, one, or multiple domain names for the specified resource as QNAMEs in the question section inverse mapping of the specified resource type."
+"Note that using the timestamp is superior to using a current time, since it allows RRs with TTLs of zero to be entered in the cache in the usual manner, but still used by the current request, even after intervals of many seconds due to system load, query retransmission timeouts, etc. -"
+"The amount of work which a resolver will do in response to a client request must be limited to guard against errors in the database, such as circular CNAME references, and operational problems, such as network partition which prevents the local limits on the number of times a resolver will retransmit a particular query to a particular name server address are essential, the resolver should have a global per-request counter to limit work on a single request."
+"The counter should be set to some initial value and decremented whenever the resolver performs any action (retransmission timeout, retransmission, etc.)"
+"Note that if the resolver structure allows one request to start others in parallel, such as when the need to access a name server for one request causes a parallel resolve for the name server's addresses, the spawned request should be started with a lower counter."
+This prevents circular references in the database from starting a chain reaction of resolver activity.
+"The resolver may encounter a situation where no addresses are available for any of the name servers named in SLIST, and where the servers in the list are precisely those which would normally be used to look up their own addresses."
+"from a name server, it should remove it from SLIST, and may wish to schedule an immediate transmission to the next candidate server address."
+Check the header for reasonableness.
+Discard datagrams which are queries when responses are expected.
+If the resolver retransmits a particular request to a name server it should be able to use a response from any of the transmissions.
+A name server will occasionally not have a current copy of a zone which it should have according to some NS RRs.
+"When a response is truncated, and a resolver doesn't know whether it has a complete set, it should not cache a possibly partial set of RRs."
+"- Cached data should never be used in preference to authoritative data, so if caching would cause this to happen the data should not be cached."
+The results of an inverse query should not be cached.
+"The results of standard queries where the QNAME contains ""*"" labels if the data might be used to construct wildcards."
+The reason is that the cache does not necessarily contain existing RRs or zone boundary information which is necessary to restrict the application of the wildcard RRs.
+- RR data in responses of dubious reliability.
+"When a resolver receives unsolicited responses or RR data other than that requested, it should discard it without caching it."
+The basic implication is that all sanity checks on a packet should be performed before any of it is cached.
+does not exist as a domain name.
+"However, until the use of mailbox binding is universal, this error condition should be interpreted to mean that the organization identified by the global part does not support mailbox binding."
+2. The query can return a Mail Rename (MR) RR.
+The mailer should replace the old mailbox with the new one and retry the operation.
+3. The query can return a MB RR.
+The MB RR carries a domain name for a host in its RDATA field.
+"The mailer should deliver the message to that host via whatever protocol is applicable, e.g., b,SMTP."
+4. The query can return one or more Mail Group (MG) RRs.
+"Technical Plan - Name Service, April 1987, version 1.9. Describes the fundamentals of the Hesiod name service."
+Suggests introduction of a hierarchy in place of a flat name space for the Internet.
+"Specification,"" RFC-883, USC/Information Sciences Institute, November 1983."
+Explains the naming scheme for top level domains.
+"This RFC contains the official specification of the hostname server protocol, which is obsoleted by the DNS."
+"This TCP based protocol accesses information stored in the RFC-952 format, and is used to obtain copies of the host table."
+Describes changes to RFC-882 and RFC-883 and reasons for them.
+Describes the transition from HOSTS.
+"service on a TCP/UDP transport: Concepts and Methods"", RFC-1001, March 1987."
+"service on a TCP/UDP transport: Detailed Specifications"", RFC-1002, March 1987."
+administer the top level domains and delegate subzones.

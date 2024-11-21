@@ -1,0 +1,4 @@
+sentences
+"For example, a name server may not wish to provide the information to the particular requester, or a name server may not wish to perform a particular operation (e.g., zone 6-15            Reserved for future use."
+The client should try other servers and server addresses before repeating a query to a specific address of a server.
+"The server should assume that the client will initiate connection closing, and should delay closing its end of the connection until all outstanding client requests have been satisfied."

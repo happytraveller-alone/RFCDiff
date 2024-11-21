@@ -1,0 +1,40 @@
+sentences
+Identifies the type of header immediately following the Destination Options header.
+Uses the same values as the IPv4 Protocol field [IANA-PN].
+Hdr Ext Len         8-bit unsigned integer.
+The Fragment header and the Authentication header are examples of the latter approach.
+"Which approach can be used depends on what action is desired of a destination node that does not understand the optional information: o  If the desired action is for the destination node to discard the packet and, only if the packet's Destination Address is not a multicast address, send an ICMP Unrecognized Type message to the packet's Source Address, then the information may be encoded either as a separate header or as an option in the in its highest-order 2 bits."
+The value 59 in the Next Header field of an IPv6 header or any extension header indicates that there is nothing following that header.
+"If the Payload Length field of the IPv6 header indicates the presence of octets past the end of a header whose Next Header field contains 59, those octets must be ignored and passed on unchanged if the packet is forwarded."
+Uses the same values as the IPv4 Protocol field [IANA-PN].
+Hdr Ext Len           8-bit unsigned integer.
+Fields specific to the extension header.
+IPv6 requires that every link in the Internet have an MTU of 1280 octets or greater.
+"Links that have a configurable MTU (for example, PPP links [RFC1661]) must be configured to have an MTU of at least 1280 octets; it is recommended that they be configured with an MTU of 1500 octets or greater, to accommodate possible encapsulations (i.e., tunneling) without incurring IPv6-layer fragmentation."
+"It is strongly recommended that IPv6 nodes implement Path MTU Discovery [RFC8201], in order to discover and take advantage of path MTUs greater than 1280 octets."
+"However, a minimal IPv6 implementation (e.g., in a boot ROM) may simply restrict itself to sending packets no larger than 1280 octets, and omit implementation of Path MTU Discovery."
+An upper-layer protocol or application that depends on IPv6 fragmentation to send packets larger than the MTU of a path should not send packets larger than 1500 octets unless it has assurance that the destination is capable of reassembling packets of that larger size.
+"Other protocols (such as TCP) do not carry their own length information, in which case the length used in the pseudo-header is the Payload Length from the IPv6 header, minus the length of any extension headers present between the IPv6 header and the upper-layer header."
+IPv6 receivers must discard UDP packets containing a zero checksum and should log the error.
+"As an exception to the default behavior, protocols that use UDP as a tunnel encapsulation may enable zero-checksum mode for a specific port (or set of ports) for sending and/or receiving."
+"The Next Header field in the pseudo-header for ICMP contains the value 58, which identifies the IPv6 version of ICMP."
+"Unlike IPv4, IPv6 nodes are not required to enforce maximum packet lifetime."
+"When using TCP over IPv6, the MSS must be computed as the maximum packet size minus 60 octets, because the minimum-length IPv6 header (i.e., an IPv6 header with no extension headers) is 20 octets longer than a minimum-length IPv4 header."
+"In other words, only the following kinds of packets are permitted in response to a received packet bearing a Routing header: o  Response packets that do not carry Routing headers."
+RFC 2460 is referenced in a number of IANA registries.
+"IPv6 packets can be protected from eavesdropping, replay, packet insertion, packet modification, and MITM attacks by use of the ""Security Architecture for the Internet Protocol"" [RFC4301]."
+"IPv6 addresses are significantly larger than IPv4 addresses making it much harder to scan the address space across the Internet and even on a single network link (e.g., Local Area Network)."
+See [RFC7707] for more information.
+See [RFC7721] for more information.
+"The design of IPv6 extension header architecture, while adding a lot of flexibility, also creates new security challenges."
+"As noted below, issues relating to the Fragment extension header have been resolved, but it's clear that for any new extension header designed in the future, the security implications need to be examined thoroughly, and this needs to include how the new extension header works with existing extension headers."
+See [RFC7045] for more information.
+This version of the IPv6 specification resolves a number of security issues that were found with the previous version [RFC2460] of the IPv6 specification.
+"These include: o  Revised the text to handle the case of fragments that are whole datagrams (i.e., both the Fragment Offset field and the M flag are zero)."
+The Fragment creation process was modified to not create whole datagram fragments (Fragment Offset field and the M flag are zero).
+See [RFC6946] and [RFC8021] for more information.
+o  Removed the paragraph in Section 5 that required including a Fragment header to outgoing packets if an ICMP Packet Too Big message reporting a Next-Hop MTU is less than 1280.
+See [RFC6946] for more information.
+"Also, when reassembling an IPv6 datagram, if one or more of its constituent fragments is determined to be an overlapping fragment, the entire datagram (and any constituent fragments) must be silently discarded."
+See [RFC5722] for more information.
+See [RFC7112] for more information.

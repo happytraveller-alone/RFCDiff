@@ -1,0 +1,443 @@
+sentences
+"Specifically, the secure channel should provide the following properties: -  Authentication: The server side of the channel is always authenticated; the client side is optionally authenticated."
+"Authentication can happen via asymmetric cryptography (e.g., RSA [RSA], the Elliptic Curve Digital Signature Algorithm (ECDSA) [ECDSA], or the Edwards-Curve Digital Signature Algorithm (EdDSA) [RFC8032]) or a symmetric pre-shared key (PSK)."
+"TLS does not hide the length of the data it transmits, though endpoints are able to pad TLS records in order to obscure lengths and improve protection against traffic analysis techniques."
+The handshake protocol is designed to resist tampering; an active attacker should not be able to force the peers to negotiate different parameters than they would if the connection were not under attack.
+"The TLS standard, however, does not specify how protocols add security with TLS; how to initiate TLS handshaking and how to interpret the authentication certificates exchanged are left to the judgment of the designers and implementors of protocols that run on top of TLS."
+"While TLS 1.3 is not directly compatible with previous versions, all versions of TLS incorporate a versioning mechanism which allows clients and servers to interoperably negotiate a common version if one is supported by both peers."
+"When discussing a particular endpoint, ""peer"" refers to the endpoint that is not the primary subject of discussion."
+sender:  An endpoint that is transmitting records.
+server:  The endpoint that did not initiate the TLS connection.
+The following is a list of the major functional differences between TLS 1.2 and TLS 1.3.
+"It is not intended to be exhaustive, and there are many minor differences."
+The list of supported symmetric encryption algorithms has been pruned of all algorithms that are considered legacy.
+The cipher suite concept has been changed to separate the authentication and key exchange mechanisms from the record protection algorithm (including secret key length) and a hash to be used with both the key derivation function and handshake message authentication code (MAC).
+-  All handshake messages after the ServerHello are now encrypted.
+The newly introduced EncryptedExtensions message allows various extensions previously sent in the clear in the ServerHello to also enjoy confidentiality protection.
+The new design allows easier analysis by cryptographers due to their improved key separation properties.
+The handshake state machine has been significantly restructured to be more consistent and to remove superfluous messages such as ChangeCipherSpec (except when needed for middlebox compatibility).
+The TLS 1.2 version negotiation mechanism has been deprecated in favor of a version list in an extension.
+This increases compatibility with existing servers that incorrectly implemented version negotiation.
+"As the server is authenticating via a PSK, it does not send a Certificate or a CertificateVerify message."
+hash algorithm to be used with the PSK MUST also be provisioned.
+Deriving a shared secret from a password or other low-entropy sources is not secure.
+The specified PSK authentication is not a strong password-based authenticated key exchange even when used with Diffie-Hellman key establishment.
+"Specifically, it does not prevent an attacker that can observe the handshake from performing a brute-force attack on the password/pre-shared key."
+Indicates noteworthy extensions sent in the previously noted message.
+*  Indicates optional or situation-dependent messages/extensions that are not always sent.
+"Specifically: 1.  This data is not forward secret, as it is encrypted solely under keys derived using the offered PSK."
+2.  There are no guarantees of non-replay between connections.
+"Protection against replay for ordinary TLS 1.3 1-RTT data is provided via the server's Random value, but 0-RTT data does not depend on the ServerHello and therefore has weaker guarantees."
+"0-RTT data cannot be duplicated within a connection (i.e., the server will not process the same data twice for the same connection), and an attacker will not be able to make 0-RTT data appear to be 1-RTT data (because it is protected with different keys)."
+The following very basic and somewhat casually defined presentation syntax will be used.
+All larger numeric data types are constructed from a fixed-length series of bytes concatenated as described in Section 3.1 and are also unsigned.
+"In TLS, the cryptographic negotiation proceeds by the client offering the following four sets of options in its ClientHello: -  A list of cipher suites which indicates the AEAD algorithm/HKDF hash pairs which the client supports."
+"If the server does not select a PSK, then the first three of these options are entirely orthogonal: the server independently selects a cipher suite, an (EC)DHE group and key share for key establishment, and a signature algorithm/certificate pair to authenticate itself to the client."
+"If there is no overlap between the received ""supported_groups"" and the groups supported by the server, then the server MUST abort the handshake with a ""handshake_failure"" or an ""insufficient_security"" alert."
+"If the server is unable to negotiate a supported set of parameters (i.e., there is no overlap between the client and server parameters), it MUST abort the handshake with either a ""handshake_failure"" or ""insufficient_security"" fatal alert (see Section 6)."
+"In that case, the client MUST send the same ClientHello without modification, except as follows: -  If a ""key_share"" extension was supplied in the HelloRetryRequest, replacing the list of shares with a list containing a single KeyShareEntry from the indicated group."
+Early data is not permitted after a HelloRetryRequest.
+"the ""obfuscated_ticket_age"" and binder values and (optionally) removing any PSKs which are incompatible with the server's indicated cipher suite."
+"Experience has shown that many servers do not properly implement version negotiation, leading to ""version intolerance"" in which the server rejects an otherwise acceptable ClientHello with a version number higher than it supports."
+This value need not be random but SHOULD be unpredictable to avoid implementations fixating on a specific value (also known as ossification).
+"Otherwise, it MUST be set as a zero-length vector (i.e., a zero-valued single byte length field)."
+"If the list contains cipher suites that the server does not recognize, support, or wish to use, the server MUST ignore those cipher suites and process the remaining ones as usual."
+"For every TLS 1.3 ClientHello, this vector MUST contain exactly one byte, set to zero, which corresponds to the ""null"" compression method in prior versions of TLS."
+"If a TLS 1.3 ClientHello is received with any other value in this field, the server MUST abort the handshake with an ""illegal_parameter"" alert."
+"However, TLS 1.3 servers might receive ClientHello messages without an extensions field from prior versions of TLS."
+"If negotiating a version of TLS prior to 1.3, a server MUST check that the message either contains no data after legacy_compression_methods or that it contains a valid extensions block with no data following."
+"In the event that a client requests additional functionality using extensions and this functionality is not supplied by the server, the client MAY abort the handshake."
+"Unfortunately, some middleboxes fail when presented with new values."
+"The last 8 bytes MUST be overwritten as described below if negotiating TLS 1.2 or TLS 1.1, but the remaining bytes MUST be random."
+Note that this field is echoed even if the client's value corresponded to a cached pre-TLS 1.3 session which the server has chosen not to resume.
+"A client which receives a legacy_session_id_echo field that does not match what it sent in the ClientHello MUST abort the handshake with an ""illegal_parameter"" alert."
+"A client which receives a cipher suite that was not offered MUST abort the handshake with an ""illegal_parameter"" alert."
+Random value to the bytes: 44 4F 57 4E 47 52 44 00 TLS 1.3 clients receiving a ServerHello indicating TLS 1.2 or below MUST check that the last 8 bytes are not equal to either of these values.
+TLS 1.2 clients SHOULD also check that the last 8 bytes are not equal to the second value if the ServerHello indicates TLS 1.1 or below.
+"This mechanism provides limited protection against downgrade attacks over and above what is provided by the Finished exchange: because the ServerKeyExchange, a message present in TLS 1.2 and below, includes a signature over both random values, it is not possible for an active attacker to modify the used."
+It does not provide downgrade protection when static RSA is used.
+"Note: This is a change from [RFC5246], so in practice many TLS 1.2 clients and servers will not behave as specified above."
+Note that renegotiation is not possible when TLS 1.3 has been negotiated.
+The server will send this message in response to a ClientHello message if it is able to find an acceptable set of parameters but the ClientHello does not contain sufficient information to proceed with the handshake.
+"Clients MUST abort the handshake with an ""illegal_parameter"" alert if the HelloRetryRequest would not result in any change in the ClientHello."
+A client which receives a cipher suite that was not offered MUST abort the handshake.
+This allows the client to avoid having to compute partial hash transcripts for multiple hashes in the second ClientHello.
+"Extensions are generally structured in a request/response fashion, though some extensions are just indications with no corresponding response."
+"The server MAY also send unsolicited extensions in the NewSessionTicket, though the client does not respond directly to these."
+"Implementations MUST NOT send extension responses if the remote endpoint did not send the corresponding extension requests, with the exception of the ""cookie"" extension in the HelloRetryRequest."
+"If an implementation receives an extension which it recognizes and which is not specified for the message in which it appears, it MUST abort the handshake with an ""illegal_parameter"" alert."
+"The ""supported_versions"" extension is used by the client to indicate which versions of TLS it supports and by the server to indicate which version it is using."
+Servers MUST only select a version of TLS present in that extension and MUST ignore any unknown versions that are present in that extension.
+Servers MUST be prepared to receive ClientHellos that include this extension but do not include 0x0304 in the list of versions.
+"Clients MUST check for this extension prior to processing the rest of the ServerHello (although they will have to extension is present, clients MUST ignore the ServerHello."
+The server can do this by storing the hash of the ClientHello in the HelloRetryRequest cookie (protected with some suitable integrity protection algorithm).
+"When sending a HelloRetryRequest, the server MAY provide a ""cookie"" extension to the client (this is an exception to the usual rule that the only extensions that may be sent are those that appear in the ClientHello)."
+"Since the server is not storing any state, this will appear as if it were the first message to be received."
+"If a server is authenticating via a certificate and the client has not sent a ""signature_algorithms"" extension, then the server MUST abort the handshake with a ""missing_extension"" alert (see Section 9.2)."
+"The ""signature_algorithms_cert"" extension was added to allow implementations which supported different sets of algorithms for certificates and in TLS itself to clearly signal their capabilities."
+"Note that a signature algorithm takes as input an arbitrary-length message, rather than a digest."
+Algorithms which traditionally act on a digest should be defined in TLS to first hash the input with a specified hash algorithm and then proceed as usual.
+"These values refer solely to signatures which appear in certificates (see Section 4.4.2.2) and are not defined for use in signed TLS handshake messages, although they MAY appear in ""signature_algorithms"" and ""signature_algorithms_cert"" for backward compatibility with TLS 1.2."
+The digest used in the mask generation function and the digest being signed are both the corresponding hash algorithm as defined in [SHS].
+The digest used in the mask generation function and the digest being signed are both the corresponding hash algorithm as defined in [SHS].
+"These values refer solely to signatures which appear in certificates (see Section 4.4.2.2) and are not defined for use in signed TLS handshake messages, although they MAY appear in ""signature_algorithms"" and ""signature_algorithms_cert"" for backward compatibility with TLS 1.2."
+Endpoints SHOULD NOT negotiate these algorithms but are permitted to do so solely for backward compatibility.
+"A certificate that begins a certification path MAY use a signature algorithm that is not advertised as being supported in the ""signature_algorithms"" extension."
+"The ""trusted_ca_keys"" extension [RFC6066], which serves a similar purpose but is more complicated, is not used in TLS 1.3 (although it may appear in ClientHello messages from clients which are offering prior versions of TLS)."
+"However, the client MUST ignore and skip any unrecognized certificate extension OIDs."
+"If the client ignored some of the required certificate extension OIDs and supplied a certificate that does not satisfy the request, the server MAY at its discretion either continue the connection without client authentication or abort the handshake with an ""unsupported_certificate"" alert."
+Any given OID MUST NOT appear more than once in the filters list.
+"Depending on the type, matching certificate extension values are not necessarily bitwise-equal."
+Servers MUST NOT send a post-handshake CertificateRequest to clients which do not offer this extension.
+"The ""extension_data"" field of the ""post_handshake_auth"" extension is zero length."
+"Clients MUST NOT act upon any information found in ""supported_groups"" prior to successful completion of the handshake but MAY use the information learned from a successfully completed handshake to change what groups they use in their ""key_share"" extension in subsequent connections."
+This vector MAY be empty if the client is requesting a HelloRetryRequest.
+"Clients MUST NOT offer any KeyShareEntry values for groups not listed in the client's ""supported_groups"" extension."
+"Servers MAY check for violations of these rules and abort the handshake with an ""illegal_parameter"" alert if one is violated."
+"Upon receipt of this extension in a HelloRetryRequest, the client MUST verify that (1) the selected_group field corresponds to a group which was provided in the ""supported_groups"" extension in the original ClientHello and (2) the selected_group field does not correspond to a group which was provided in the ""key_share"" extension in the original ClientHello."
+"If either of these checks fails, then the client MUST abort the handshake with an ""illegal_parameter"" alert."
+"Servers MUST NOT send a KeyShareEntry for any group not indicated in the client's ""supported_groups"" extension and MUST NOT send a KeyShareEntry when using the ""psk_ke"" PskKeyExchangeMode."
+"If this check fails, the client MUST abort the handshake with an ""illegal_parameter"" alert."
+This check ensures that the remote peer is properly behaved and isn't forcing the local system into a small subgroup.
+ECDHE parameters for both clients and servers are encoded in the opaque key_exchange field of a KeyShareEntry in a KeyShare structure.
+"For P-256, this means that each of X and Y use 32 octets, padded on the left by zeros if necessary."
+"This process consists of three steps: (1) verify that Q is not the point at infinity (O), (2) verify that for Q = (x, y) both integers x and y are in the correct interval, and (3) ensure that (x, y) is a correct solution to the elliptic curve equation."
+Servers MUST NOT select a key exchange mode that is not listed by the client.
+"Servers SHOULD NOT send NewSessionTicket with tickets that are not compatible with the advertised modes; however, if a server does so, the impact will just be that the client's attempts at resumption fail."
+"The server then skips past early data by attempting to deprotect received records using the handshake traffic key, discarding records which fail deprotection (up to the configured max_early_data_size)."
+"The server then ignores early data by skipping all records with an external content type of ""application_data"" (indicating that they are encrypted), up to the configured max_early_data_size."
+It is not possible for the server to accept only a subset of the early data messages.
+"Even though the server sends a message accepting early data, the actual early data itself may already be in flight by the time the server generates this message."
+"For PSKs established via a NewSessionTicket message, the associated values are those negotiated in the connection during which the ticket was established."
+"If the client attempts a 0-RTT handshake but the server rejects it, the server will generally not have the 0-RTT record protection keys and must instead use trial decryption (either with the 1-RTT handshake keys or by looking for a cleartext ClientHello in the case of a HelloRetryRequest) to find the first non-0-RTT message."
+"If the server chooses to accept the ""early_data"" extension, then it MUST comply with the same error-handling requirements specified for all records when processing early data records."
+"For instance, when the negotiated connection selects a different ALPN protocol from what was used for the early data, an application might need to construct different messages."
+"Similarly, if early data assumes anything about the connection state, it might be sent in error after the handshake completes."
+A TLS implementation SHOULD NOT automatically resend early data; applications are in a better position to decide when retransmission is appropriate.
+"For identities established externally, an obfuscated_ticket_age of 0 SHOULD be used, and servers MUST ignore the value."
+"However, in reality the implementations were not consistent on which of two supplied SNI values they would use, leading to the consistency requirement being de facto enforced by the clients."
+"In TLS 1.3, the SNI value is always explicitly specified in the resumption handshake, and there is no need for the server to associate an SNI value with the ticket."
+"Any unknown PSKs (e.g., ones not in the PSK database or encrypted with an unknown key) SHOULD simply be ignored."
+"If no acceptable PSKs are found, the server SHOULD perform a non-PSK handshake if possible."
+"If this value is not present or does not validate, the server MUST abort the handshake."
+"Servers SHOULD NOT attempt to validate multiple binders; rather, they SHOULD select a single PSK and validate solely the binder that corresponds to that PSK."
+"Servers MUST check that it is the last extension and otherwise fail the handshake with an ""illegal_parameter"" alert."
+"Clients MUST NOT attempt to use tickets which have ages greater than the ""ticket_lifetime"" value which was provided with the ticket."
+"The ""obfuscated_ticket_age"" field of each PskIdentity contains an obfuscated version of the ticket age formed by taking the age in milliseconds and adding the ""ticket_age_add"" value that was included with the ticket (see Section 4.6.1), modulo 2^32."
+This addition prevents passive observers from correlating connections unless tickets are reused.
+"Note that the ""ticket_lifetime"" field in the NewSessionTicket message is in seconds but the ""obfuscated_ticket_age"" is in milliseconds."
+"Because ticket lifetimes are restricted to a week, 32 bits is enough to represent any plausible age, even in milliseconds."
+"Clients are permitted to ""stream"" 0-RTT data until they receive the server's Finished, only then sending the EndOfEarlyData message, followed by the rest of the handshake."
+"The EncryptedExtensions message contains extensions that can be protected, i.e., any which are not needed to establish the cryptographic context but which are not associated with individual certificates."
+The certificate_request_context MUST be unique within the scope of this connection (thus preventing replay of client CertificateVerify messages).
+This field SHALL be zero length unless used for the post-handshake authentication exchanges described in Section 4.6.2.
+"The ""signature_algorithms"" extension MUST be specified, and other extensions may optionally be included if defined for this message."
+"In prior versions of TLS, the CertificateRequest message carried a list of signature algorithms and certificate authorities which the server would accept."
+"Servers which are authenticating with a PSK MUST NOT send the CertificateRequest message in the main handshake, though they MAY send it in post-handshake authentication (see Section 4.6.2) provided that the client has sent the ""post_handshake_auth"" extension (see Section 4.2.6)."
+"Otherwise (in the case of server authentication), this field SHALL be zero length."
+"If the corresponding certificate type extension (""server_certificate_type"" or ""client_certificate_type"") was not negotiated in EncryptedExtensions, or the X.509 certificate type was negotiated, then each CertificateEntry contains a DER-encoded X.509 certificate."
+"For maximum compatibility, all implementations SHOULD be prepared to handle potentially extraneous certificates and arbitrary orderings from any TLS version, with the exception of the end-entity certificate which MUST be first."
+A client will send an empty certificate_list if it does not have an appropriate certificate to send in response to the server's authentication request.
+"If the server supplies an empty Certificate message, the client MUST abort the handshake with a ""decode_error"" alert."
+"If the client does not send any certificates (i.e., it sends an empty Certificate message), the server MAY at its discretion either continue the handshake without client authentication or abort the handshake with a ""certificate_required"" alert."
+"Also, if some aspect of the certificate chain was unacceptable (e.g., it was not signed by a known, trusted CA), the server MAY at its discretion either continue the handshake (considering the client unauthenticated) or abort the handshake."
+"Any endpoint receiving any certificate which it would need to validate using any signature algorithm using an MD5 hash MUST abort the handshake with a ""bad_certificate"" alert."
+"For clarity, this means that endpoints can accept these algorithms for certificates that are self-signed or are trust anchors."
+The CertificateVerify message also provides integrity for the handshake up to this point.
+"If the CertificateVerify message is sent by a server, the signature algorithm MUST be one offered in the client's ""signature_algorithms"" extension unless no valid certificate chain can be produced without unsupported algorithms (see Section 4.2.3)."
+solely for use in legacy certificates and are not valid for CertificateVerify signatures.
+"If the verification fails, the receiver MUST terminate the handshake with a ""decrypt_error"" alert."
+"Recipients of Finished messages MUST verify that the contents are correct and if incorrect MUST terminate the connection with a ""decrypt_error"" alert."
+"2.  Servers MAY send data after sending their first flight, but because the handshake is not yet complete, they have no assurance of either the peer's identity or its liveness (i.e., the ClientHello might have been replayed)."
+"In previous versions of TLS, the verify_data was always 12 octets long."
+Note: Alerts and any other non-handshake record types are not handshake messages and are not included in the hash computations.
+"If the server does not send an ""early_data"" extension in EncryptedExtensions, then the client MUST NOT send an EndOfEarlyData message."
+"This message indicates that all 0-RTT application_data messages, if any, have been transmitted and that the Servers MUST NOT send this message, and clients receiving it MUST terminate the connection with an ""unexpected_message"" alert."
+This message creates a unique association between the ticket value and a secret PSK derived from the resumption master secret (see Section 7).
+"Multiple tickets are useful for clients for a variety of purposes, including: -  Opening multiple parallel HTTP connections."
+Any ticket MUST only be resumed with a cipher suite that has the same KDF hash algorithm as that used to establish the original connection.
+Clients MUST only resume if the new SNI value is valid for the server certificate presented in the original session and SHOULD only resume if the SNI value matches the one used in the original session.
+"The latter is a performance optimization: normally, there is no reason to expect that different servers covered by a single certificate would be able to accept each other's tickets; hence, attempting resumption in that case would waste a single-use ticket."
+implementations MUST use the value sent in the resumption ClientHello rather than the value sent in the previous session.
+"Note: Although the resumption master secret depends on the client's second flight, a server which does not request client authentication MAY compute the remainder of the transcript independently and then send a NewSessionTicket immediately upon sending its Finished rather than waiting for the client Finished."
+"This might be appropriate in cases where the client is expected to open multiple TLS connections in parallel and would benefit from the reduced overhead of a resumption handshake, for example."
+Servers MUST NOT use any value greater than 604800 seconds (7 days).
+The value of zero indicates that the ticket should be discarded immediately.
+"Clients MUST NOT cache tickets for longer than 7 days, regardless of the ticket_lifetime, and MAY delete tickets earlier based on local policy."
+The server MUST generate a fresh value for each ticket it sends.
+ticket_nonce:  A per-ticket value that is unique across all tickets issued on this connection.
+It MAY be either a database lookup key or a self-encrypted and self-authenticated value.
+"Only Application Data payload (i.e., plaintext but not padding or the inner content type byte) is counted."
+"A server receiving more than max_early_data_size bytes of 0-RTT data SHOULD terminate the connection with an ""unexpected_message"" alert."
+"Note that servers that reject early data due to lack of cryptographic material will be unable to differentiate padding from content, so clients SHOULD NOT depend on being able to send large quantities of padding in early data records."
+All of the client's messages for a given response MUST appear consecutively on the wire with no intervening messages of other types.
+"Note: Because client authentication could involve prompting the user, servers MUST be prepared for some delay, including receiving an arbitrary number of other messages between sending the CertificateRequest and receiving a response."
+The KeyUpdate handshake message is used to indicate that the sender is updating its sending cryptographic keys.
+"However, because send and receive keys are derived from independent traffic secrets, retaining the receive traffic secret does not threaten the forward secrecy of data sent before the sender changed keys."
+An implementation may receive an unencrypted record of type change_cipher_spec consisting of the single byte value 0x01 at any time after the first ClientHello message has been sent or received and before the peer's Finished message has been received and MUST simply drop it without further processing.
+The record layer fragments information blocks into TLSPlaintext records carrying data in chunks of 2^14 bytes or less.
+Note that these rules are stricter than what was enforced in TLS 1.2.
+Application Data messages are always protected.
+"Zero-length fragments of Application Data MAY be sent, as they are potentially useful as a traffic analysis countermeasure."
+This field is deprecated and MUST be ignored for all purposes.
+The length of the plaintext is greater than the corresponding TLSPlaintext.
+The output is either the plaintext or an error indicating that the decryption failed.
+"If the decryption fails, the receiver MUST terminate the connection with a ""bad_record_mac"" alert."
+Each sequence number is set to zero at the beginning of a connection and whenever the key is changed; the first record transmitted under a particular traffic key MUST use sequence number 0.
+"Because the size of sequence numbers is 64-bit, they should not wrap."
+An AEAD algorithm where N_MAX is less than 8 bytes MUST NOT be used with TLS.
+2.  The padded sequence number is XORed with either the static client_write_iv or server_write_iv (depending on the role).
+An unpadded record is just a record with a padding length of zero.
+Padding is a string of zero-valued bytes appended to the ContentType field before encryption.
+Implementations MUST set the padding octets to all zeros before encrypting.
+Implementations MUST NOT send Handshake and Alert records that have a zero-length TLSInnerPlaintext.
+mechanism; upon successful decryption of a TLSCiphertext.
+"The design also enforces all-zero padding octets, which allows for quick detection of padding errors."
+"If a receiving implementation does not find a non-zero octet in the cleartext, it MUST terminate the connection with an ""unexpected_message"" alert."
+"Padding for encrypted Handshake or Alert records must still be handled at the TLS layer, though."
+TLS provides an Alert content type to indicate closure information and errors.
+"In TLS 1.3, the severity is implicit in the type of alert being sent, and the ""level"" field can safely be ignored."
+"Upon receiving an error alert, the TLS implementation SHOULD indicate an error to the application and MUST NOT allow any further data to be sent or received on the connection."
+"Servers and clients MUST forget the secret values and keys established in failed connections, with the exception of the PSKs associated with session tickets, which SHOULD be discarded if possible."
+All the alerts listed in Section 6.2 MUST be sent with AlertLevel=fatal and MUST be treated as error alerts when received regardless of the AlertLevel in the message.
+Note: TLS defines two generic alerts (see Section 6) to use upon failure to parse a message.
+The client and the server must share knowledge that the connection is ending in order to avoid a truncation attack.
+This alert notifies the recipient that the sender will not send any more messages on this connection.
+Any data received after a closure alert has been received MUST be ignored.
+user_canceled:  This alert notifies the recipient that the sender is canceling the handshake for some reason unrelated to a protocol failure.
+"If a user cancels an operation after the handshake is complete, just closing the connection by sending a ""close_notify"" is more appropriate."
+Any data received after a closure alert has been received MUST be ignored.
+"If a transport-level close is received prior to a ""close_notify"", the receiver cannot know that all the data that was sent has been received."
+"Each party MUST send a ""close_notify"" alert before closing its write side of the connection, unless it has already sent some error alert."
+This does not have any effect on its read side of the connection.
+"No part of this standard should be taken to dictate the manner in which a usage profile for TLS manages its data transport, including when connections are opened or closed."
+It is assumed that closing the write side of a connection reliably delivers pending data before destroying the transport.
+"When an error is detected, the detecting party sends a message to its peer."
+"Whenever an implementation encounters a fatal error condition, it SHOULD send an appropriate fatal alert and MUST close the connection without sending or receiving any additional data."
+"In the rest of this specification, when the phrases ""terminate the connection"" and ""abort the handshake"" are used without a specific alert it means that the implementation SHOULD send the alert indicated by the descriptions below."
+"The phrases ""terminate the connection with an X alert"" and ""abort the handshake with an X alert"" mean that the implementation MUST send alert X if it sends any alert."
+"All alerts defined below in this section, as well as all unknown alerts, are universally considered fatal as of TLS 1.3 (see Section 6)."
+"The following error alerts are defined: unexpected_message:  An inappropriate message (e.g., the wrong handshake message, premature Application Data, etc.) was received."
+This alert should never be observed in communication between proper implementations.
+This alert is returned if a record is received which cannot be deprotected.
+"Because AEAD algorithms combine decryption and verification, and also to avoid side-channel attacks, this alert is used for all deprotection failures."
+"This alert should never be observed in communication between proper implementations, except when messages were corrupted in the network."
+"This alert should never be observed in communication between proper implementations, except when messages were corrupted in the network."
+"handshake_failure:  Receipt of a ""handshake_failure"" alert message indicates that the sender was unable to negotiate an acceptable set of security parameters given the options available."
+"bad_certificate:  A certificate was corrupt, contained signatures that did not verify correctly, etc. certificate_revoked:  A certificate was revoked by its signer."
+"certificate_unknown:  Some other (unspecified) issue arose in processing the certificate, rendering it unacceptable."
+illegal_parameter:  A field in the handshake was incorrect or inconsistent with other fields.
+This alert is used for errors which conform to the formal protocol syntax but are otherwise incorrect.
+"unknown_ca:  A valid certificate chain or partial chain was received, but the certificate was not accepted because the CA certificate could not be located or could not be matched with a known trust anchor."
+"access_denied:  A valid certificate or PSK was received, but when access control was applied, the sender decided not to proceed with negotiation."
+decode_error:  A message could not be decoded because some field was out of the specified range or the length of the message was incorrect.
+This alert is used for errors where the message does not conform to the formal protocol syntax.
+"This alert should never be observed in communication between proper implementations, except when messages were corrupted in the network."
+"decrypt_error:  A handshake (not record layer) cryptographic operation failed, including being unable to correctly verify a signature or validate a Finished message or a PSK binder."
+protocol_version:  The protocol version the peer has attempted to negotiate is recognized but not supported (see Appendix D).
+"insufficient_security:  Returned instead of ""handshake_failure"" when a negotiation has failed specifically because the server requires parameters more secure than those supported by the client."
+internal_error:  An internal error unrelated to the peer or the correctness of the protocol (such as a memory allocation failure) makes it impossible to continue.
+message not containing an extension that is mandatory to send for the offered TLS version or other negotiated parameters.
+"bad_certificate_status_response:  Sent by clients when an invalid or unacceptable OCSP response is provided by the server via the ""status_request"" extension (see [RFC6066])."
+unknown_psk_identity:  Sent by servers when PSK key establishment is desired but no acceptable PSK identity is provided by the client.
+"Sending this alert is OPTIONAL; servers MAY instead choose to send a ""decrypt_error"" alert to merely indicate an invalid PSK identity."
+certificate_required:  Sent by servers when a client certificate is desired but none was provided by the client.
+"no_application_protocol:  Sent by servers when a client ""application_layer_protocol_negotiation"" extension advertises only protocols that the server does not support (see [RFC7301])."
+"Note: With common hash functions, any label longer than 12 characters requires an additional iteration of the hash function to compute."
+The labels in this specification have all been chosen to fit within this limit.
+This produces a full key derivation schedule shown in the diagram below.
+"-  ""0"" indicates a string of Hash.length bytes set to zero."
+"If a given secret is not available, then the 0-value consisting of a string of Hash."
+length bytes set to zeros is used.
+"Once all the values which are to be derived from a given secret have been computed, that secret SHOULD be erased."
+"Once client_/server_application_traffic_secret_N+1 and its associated traffic keys have been computed, implementations SHOULD delete client_/server_application_traffic_secret_N and its associated traffic keys."
+The value of Secret for each record type is shown in the table below.
+"For finite field groups, a conventional Diffie-Hellman [DH76] computation is performed."
+The negotiated key (Z) is converted to a byte string by encoding in big-endian form and left-padded with zeros up to the size of the prime.
+"For secp256r1, secp384r1, and secp521r1, ECDH calculations (including parameter and key generation as well as the shared secret calculation) are performed according to [IEEE1363] using the ECKAS-DH1 scheme with the identity map as the key derivation function (KDF), so that the shared secret is the x-coordinate of the ECDH shared secret elliptic curve point represented as an octet string."
+"Note that this octet string (""Z"" in IEEE 1363 terminology) as output by FE2OSP (the Field Element to Octet String Conversion Primitive) has constant length for any given field; leading zeros found in this octet string MUST NOT be truncated."
+(Note that this use of the identity KDF is a technicality.
+The complete picture is that ECDH is employed with a non-trivial KDF because TLS does not directly use this secret for anything other than for computing other secrets.)
+"The output is used raw, with no processing."
+"Implementations MUST check whether the computed Diffie-Hellman shared secret is the all-zero value and abort if so, as described in Section聽6 of [RFC7748]."
+A separate interface for the early exporter is RECOMMENDED; this avoids the exporter user accidentally using an early exporter when a regular one is desired or vice versa.
+"If no context is provided, the context_value is zero length."
+"Consequently, providing no context computes the same value as providing an empty context."
+This is a change from previous versions of TLS where an empty context produced a different output than an absent context.
+"As of this document's publication, no allocated exporter label is used both with and without a context."
+Future specifications MUST NOT define a use of exporters that permit both an empty context and no context with the same label.
+"New uses of exporters SHOULD provide a context in all exporter computations, though the value could be empty."
+"As noted in Section 2.3 and Appendix E.5, TLS does not provide inherent replay protections for 0-RTT data."
+There are two potential threats to be concerned with: -  Network attackers who mount a replay attack by simply duplicating a flight of 0-RTT data.
+This threat already exists to some extent because clients that value robustness respond to network errors by attempting to retry requests.
+"However, 0-RTT adds an additional dimension for any server system which does not maintain globally consistent server state."
+"Specifically, if a server system has multiple zones where tickets from zone A will not be accepted in zone B, then an attacker can duplicate a ClientHello and early data intended for A to both A and B.  At A, the data will be accepted in 0-RTT, but at B the server will reject 0-RTT data and instead force a full handshake."
+The first class of attack can be prevented by sharing state to guarantee that the 0-RTT data is accepted at most once.
+"It is understood, however, that due to operational concerns not all deployments will maintain state at that level."
+"Therefore, in normal operation, clients will not know which, if any, of these mechanisms servers actually implement and hence MUST only send early data which they deem safe to be replayed."
+"In addition to the direct effects of replays, there is a class of attacks where even operations normally considered idempotent could be exploited by a large number of replays (timing attacks, resource limit exhaustion and others, as described in Appendix E.5)."
+Those can be mitigated by ensuring that every 0-RTT payload can be replayed only a limited number of times.
+"The server MUST ensure that any instance of it (be it a machine, a thread, or any other entity within the relevant serving infrastructure) would accept 0-RTT for the same 0-RTT handshake at most once; this limits the number of replays to the number of server instances in the deployment."
+"Such a guarantee can be accomplished by locally recording data from recently received ClientHellos and rejecting repeats, or by any other method that server instance"" guarantee is a minimum requirement; servers SHOULD limit 0-RTT replays further when feasible."
+The second class of attack cannot be prevented at the TLS layer and MUST be dealt with by any application.
+Note that any application whose clients implement any kind of retry behavior already needs to implement some sort of anti-replay defense.
+The simplest form of anti-replay defense is for the server to only allow each session ticket to be used once.
+"If an unknown ticket is provided, the server would then fall back to a full handshake."
+"If the tickets are not self-contained but rather are database keys, and the corresponding PSKs are deleted upon use, then connections established using PSKs enjoy forward secrecy."
+This improves security for all 0-RTT data and PSK usage when PSK is used without (EC)DHE.
+"Because this mechanism requires sharing the session database between server nodes in environments with multiple distributed servers, it may be hard to achieve high rates of successful PSK 0-RTT connections when compared to self-encrypted tickets."
+An alternative form of anti-replay is to record a unique value derived from the ClientHello (generally either the random value or the PSK binder) and reject duplicates.
+"Recording all ClientHellos causes state to grow without bound, but a server can instead record ClientHellos within a given time window and use the ""obfuscated_ticket_age"" to ensure that tickets aren't reused outside that window."
+"It then computes the expected_arrival_time as described in the next section and rejects 0-RTT if it is outside the recording window, falling back to the 1-RTT handshake."
+"Servers MAY also implement data stores with false positives, such as Bloom filters, in which case they MUST respond to apparent replay by rejecting 0-RTT but MUST NOT abort the handshake."
+"If the ClientHello contains multiple PSK identities, then an attacker can create multiple ClientHellos with different binder values for the less-preferred identity on the assumption that the server will not verify it (as recommended by Section 4.2.11)."
+"If the binder for B is part of the storage key, then this ClientHello will not appear as a duplicate, which will cause the ClientHello to be accepted, and may cause side effects such as replay cache pollution, although any 0-RTT data will not be decryptable because it will use different keys."
+"Because this mechanism does not require storing all outstanding tickets, it may be easier to implement in distributed systems with high rates of resumption and 0-RTT, at the cost of potentially weaker anti-replay defense because of the difficulty of reliably storing and retrieving the received ClientHello messages."
+"In many such systems, it is impractical to have globally consistent storage of all the received ClientHellos."
+This approach prevents simple replay by the attacker because only one zone will accept 0-RTT data.
+A weaker design is to implement separate storage for each zone but allow 0-RTT in any zone.
+Application message duplication of course remains possible with either design.
+"When implementations are freshly started, they SHOULD reject 0-RTT as long as any portion of their recording window overlaps the startup time."
+"Otherwise, they run the risk of accepting replays which were originally sent during that period."
+"Because the ClientHello indicates the time at which the client sent it, it is possible to efficiently determine whether a ClientHello was likely sent reasonably recently and only accept 0-RTT for such a ClientHello, otherwise falling back to a 1-RTT handshake."
+"In order to implement this mechanism, a server needs to store the time that the server generated the session ticket, offset by an estimate of the round-trip time between client and server."
+"I.e., adjusted_creation_time = creation_time + estimated_RTT"
+"When a new ClientHello is received, the expected_arrival_time is then compared against the current server wall clock time and if they differ by more than a certain amount, 0-RTT is rejected, though the 1-RTT handshake can be allowed to complete."
+"Variations in client and server clock rates are likely to be minimal, though potentially the absolute times may be off by large values."
+Network propagation delays are the most likely causes of a mismatch in legitimate values for elapsed time.
+"Both the NewSessionTicket and ClientHello messages might be retransmitted and therefore delayed, which might be hidden by TCP."
+"For clients on the Internet, this implies windows on the order of ten seconds to account for errors in clocks and variations in measurements; other deployment scenarios may have different needs."
+"Clock skew distributions are not symmetric, so the optimal tradeoff may involve an asymmetric range of permissible mismatch values."
+"Note that freshness checking alone is not sufficient to prevent replays because it does not detect them during the error window, which -- depending on bandwidth and system capacity -- could include billions of replays in real-world settings."
+"In addition, this freshness checking is only done at the time the ClientHello is received and not when subsequent early Application Data records are received."
+"After early data is accepted, records may continue to be streamed to the server over a longer time period."
+An empty KeyShare.client_shares vector is permitted.
+"Servers receiving a ClientHello which does not conform to these requirements MUST abort the handshake with a ""missing_extension"" alert."
+"Servers requiring this extension SHOULD respond to a ClientHello lacking a ""server_name"" extension by terminating the connection with a ""missing_extension"" alert."
+"Otherwise, the server may fail to interoperate by selecting one of those parameters."
+"-  A server receiving a ClientHello MUST correctly ignore all unrecognized cipher suites, extensions, and other parameters."
+"Otherwise, it may fail to interoperate with newer clients."
+"In particular, it MUST generate its own ClientHello containing only parameters it understands, and it MUST generate a fresh ServerHello random value, rather than forwarding the endpoint's value."
+-  A middlebox which forwards ClientHello parameters it does not understand MUST NOT process any messages beyond that ClientHello.
+"Otherwise, it may fail to interoperate with newer clients and servers."
+"Forwarded ClientHellos may contain advertisements for features not supported by the middlebox, so the response may include future TLS additions the middlebox does not recognize."
+"The design of TLS 1.3 was constrained by widely deployed non-compliant TLS middleboxes (see Appendix D.4); however, it does not relax the invariants."
+Those middleboxes continue to be non-compliant.
+"The ""Value"" and ""Description"" columns are taken from the table."
+"This column has been initially populated from the table in Section 4.2, with any extension not listed there marked as ""-"" to indicate that it is not used by TLS 1.3."
+The entries for values 29 and 30 (x25519 and x448) have been updated to also refer to this document.
+Values with the first byte in the range 0-6 or with the second byte in the range 0-3 that are not currently allocated are reserved for backward compatibility.
+TLS 1.3 implementations MUST NOT send them but might receive them from older TLS implementations.
+"Although TLS 1.3 uses the same cipher suite space as previous versions of TLS, TLS 1.3 cipher suites are defined differently, only specifying the symmetric ciphers, and cannot be used for TLS 1.2."
+"Similarly, cipher suites for TLS 1.2 and lower cannot be used with TLS 1.3."
+The TLS protocol cannot prevent many common security mistakes.
+"With a properly functioning CSPRNG, this does not present a security problem, as it is not feasible to determine the CSPRNG state from its output."
+The selection and addition of trust anchors should be done very carefully.
+"For example, certification paths containing keys or signatures weaker than 2048-bit RSA or 224-bit ECDSA are not appropriate for secure applications."
+Implementation experience has shown that certain parts of earlier TLS specifications are not easy to understand and have been a source of interoperability and security problems.
+"Many of these areas have been clarified in this document, but this appendix contains a short list of the most important things that require special attention from implementors."
+Do you correctly handle corner cases like a ClientHello that is split into several small fragments?
+"Have you ensured that all support for SSL, RC4, EXPORT ciphers, and MD5 (via the ""signature_algorithms"" extension) is completely removed from all possible configurations that support TLS 1.3 or later, and that attempts to use these obsolete capabilities fail correctly (see Appendix D)?"
+"When processing the plaintext fragment produced by AEAD-Decrypt and scanning from the end for the ContentType, do you avoid scanning past the start of the cleartext in the event that the peer has sent a malformed plaintext of all zeros?"
+This ensures that clients are always able to use a new ticket when creating a new connection.
+Previous versions of TLS offered explicitly unauthenticated cipher suites based on anonymous Diffie-Hellman.
+-  Using a public key contained in a certificate but without validation of the certificate chain or any of its contents.
+Either technique used alone is vulnerable to man-in-the-middle attacks and therefore unsafe for general use.
+"However, it is also possible to bind such connections to an external authentication mechanism via out-of-band validation of the server's public key, trust on first use, or a mechanism such as channel bindings (though the channel bindings described in [RFC5929] are not defined for TLS 1.3)."
+"If no such mechanism is used, then the connection has no protection against active man-in-the-middle attack; applications MUST NOT use TLS in such a way absent explicit configuration or a specific application profile."
+Servers can also handle clients trying to use future versions of TLS as long as the ClientHello format remains compatible and there is at least one protocol version supported by both the client and the server.
+legacy_record_version MUST be ignored by all implementations.
+"Because TLS 1.3 always hashes in the transcript up to the server Finished, implementations which support both TLS 1.3 and earlier versions SHOULD indicate the use of the Extended Master Secret extension in their APIs whenever TLS 1.3 is used."
+"If the server does not support TLS 1.3, it will respond with a ServerHello containing an older version number."
+Note that 0-RTT data is not compatible with older servers and SHOULD NOT be sent absent knowledge that the server supports TLS 1.3.
+"If the version chosen by the server is not supported by the client (or is not acceptable), the client MUST abort the handshake with a ""protocol_version"" alert."
+Some legacy server implementations are known to not implement the TLS specification properly and might abort connections upon encountering TLS extensions or versions which they are not aware of.
+Interoperability with buggy servers is a complex topic beyond the scope of this document.
+"Multiple connection attempts may be required in order to negotiate a backward-compatible connection; however, this practice is vulnerable to downgrade attacks and is NOT RECOMMENDED."
+"If the ""supported_versions"" extension is absent and the server only supports versions greater than ClientHello."
+"Servers will receive various TLS 1.x versions in this field, but its value MUST always be ignored."
+0-RTT data is not compatible with older servers.
+"An older server will respond to the ClientHello with an older ServerHello, but it will not correctly skip the 0-RTT data and will fail to complete the handshake."
+"This can cause issues when a client attempts to use 0-RTT, particularly against multi-server deployments."
+A client that attempts to send 0-RTT data MUST fail a connection if it receives a ServerHello with TLS 1.2 or older.
+It can then retry the connection with 0-RTT disabled.
+"To avoid this error condition, multi-server deployments SHOULD ensure a uniform and stable deployment of TLS 1.3 without 0-RTT prior to enabling 0-RTT."
+"When put together, these changes make the TLS 1.3 handshake resemble TLS 1.2 session resumption, which improves the chance of successfully connecting through middleboxes."
+"Implementations negotiating the use of older versions of TLS SHOULD prefer forward secret and AEAD cipher suites, when available."
+Implementations MUST NOT offer or negotiate RC4 cipher suites for any version of TLS for any reason.
+Old versions of TLS permitted the use of very low strength ciphers.
+Ciphers with a strength less than 112 bits MUST NOT be offered or negotiated for any version of TLS for any reason.
+"The security of SSL 3.0 [RFC6101] is considered insufficient for the reasons enumerated in [RFC7568], and it MUST NOT be negotiated for any reason."
+"The security of SSL 2.0 [SSL2] is considered insufficient for the reasons enumerated in [RFC6176], and it MUST NOT be negotiated for any reason."
+Implementations MUST NOT send any records with a version less than 0x0300.
+Implementations SHOULD NOT accept any records with a version less than 0x0300 (but may inadvertently do so if the record version number is ignored completely).
+"Implementations MUST NOT use the Truncated HMAC extension, defined in Section聽7 of [RFC6066], as it is not applicable to AEAD algorithms and has been shown to be insecure in some scenarios."
+"Even under these conditions, the handshake should provide the properties listed below."
+"If the client is authenticated, the server's view of the peer identity should match the client's identity."
+"Downgrade protection:  The cryptographic parameters should be the same on both sides and should be the same as if the peers had been communicating in the absence of an attack (see [BBFGKZ16], Definitions 8 and 9)."
+"If the long-term keying material (in this case the signature keys in certificate- based authentication modes or the external/resumption PSK in PSK with (EC)DHE modes) is compromised after the handshake is complete, this does not compromise the security of the session key (see [DOW92]), as long as the session key itself has been erased."
+"The forward secrecy property is not satisfied when PSK is used in the ""psk_ke"" PskKeyExchangeMode."
+"Key Compromise Impersonation (KCI) resistance:  In a mutually authenticated connection with certificates, compromising the long-term secret of one actor should not break that actor's authentication of their peer in the given connection (see [HGFS15])."
+"For example, if a client's signature key is compromised, it should not be possible to impersonate arbitrary servers to that client in subsequent handshakes."
+Protection of endpoint identities:  The server's identity (certificate) should be protected against passive attackers.
+The client's identity should be protected against both passive and active attackers.
+The external PSK and resumption PSK bootstrap from a long-term shared secret into a unique per-connection set of short-term session keys.
+"The resumption PSK has been designed so that the resumption master secret computed by connection N and needed to form connection N+1 is separate from the traffic keys used by In addition, if multiple tickets are established on the same connection, they are associated with different keys, so compromise of the PSK associated with one ticket does not lead to the compromise of connections established with PSKs associated with other tickets."
+This property is most interesting if tickets are stored in a database (and so can be deleted) rather than if they are self-encrypted.
+This requires that both the KDF used to produce the resumption master secret and the MAC used to compute the binder be collision resistant.
+"TLS does not currently permit the server to send a certificate_request message in non-certificate-based handshakes (e.g., PSK)."
+"If this restriction were to be relaxed in future, the client's signature would not cover the server's certificate directly."
+It is unsafe to use certificate-based client authentication when the client might potentially share the same PSK/key-id pair with two different endpoints.
+Implementations MUST NOT combine external PSKs with certificate-based authentication of either the client or the server unless negotiated by some extension.
+Note that they do not include the client's certificate; future applications which wish to bind to the client's certificate may need to define a new exporter that includes the full handshake transcript.
+signature) prevents downgrade attacks.
+"As soon as the client and the server have exchanged enough information to establish shared keys, the remainder of the handshake is encrypted, thus providing protection against passive attackers, even if the computed shared key is not authenticated."
+"Because the server authenticates before the client, the client can ensure that if it authenticates to the server, it only reveals its identity to an authenticated server."
+Note that implementations must use the provided record-padding mechanism during the handshake to avoid leaking information about the identities due to length.
+"The client's proposed PSK identities are not encrypted, nor is the one that the server selects."
+"This ordering should always be followed (including in future revisions of this document); in particular, one SHOULD NOT use an output of HKDF-Extract as an input to another application of HKDF-Extract without an HKDF-Expand in between."
+"In some of the uses of HKDF in this document (e.g., for generating exporters and the resumption_master_secret), it is necessary that the application of HKDF-Expand be collision resistant; namely, it should be infeasible to find two different inputs to HKDF-Expand that output the same value."
+"A client that has sent authentication data to a server, either during the handshake or in post-handshake authentication, cannot be sure whether the server afterwards considers the client to be authenticated or not."
+"If the client needs to determine if the server considers the connection to be unilaterally or mutually authenticated, this has to be provisioned by the application layer."
+"The 0-RTT mode of operation generally provides security properties similar to those of 1-RTT data, with the two exceptions that the 0-RTT encryption keys do not provide full forward secrecy and that the server is not able to guarantee uniqueness of the handshake (non-replayability) without keeping potentially undue amounts of state."
+"However, because these secrets can be used to compute any exporter value, they SHOULD be erased as soon as possible."
+"If the total set of exporter labels is known, then implementations SHOULD pre-compute the inner Derive-Secret stage of the exporter computation for all those labels, then erase the [early_]exporter_master_secret, followed by each inner value as soon as it is known that it will not be needed again."
+TLS does not provide security for handshakes which take place after the peer's long-term secret (signature key or external PSK) is compromised.
+"It therefore does not provide post-compromise security [CCG16], sometimes also referred to as backward or future secrecy."
+"This is in contrast to KCI resistance, which describes the security guarantees that a party has after its own long-term secret has been compromised."
+"The reader should refer to the following references for analysis of the TLS handshake: [DFGS15], [CHSV16], [DFGS16], [KW16], [Kraw16], [FGSW16], [LXZFH16], [FG17], and [BBK17]."
+An attacker should not be able to determine the plaintext contents of a given record.
+Integrity:  An attacker should not be able to craft a new record which is different from an existing record which will be accepted by the receiver.
+"An attacker should not be able to cause the receiver to accept a record which it has already accepted or cause the receiver to accept record N+1 without having first processed record N. Length concealment:  Given a record with a given external length, the attacker should not be able to determine the amount of the record that is content versus padding."
+"If the traffic key update mechanism described in Section 4.6.3 has been used and the previous generation key is deleted, an attacker who compromises the endpoint should not be able to decrypt traffic encrypted with the old key."
+TLS does not provide security for data which is communicated on a connection after a traffic secret of that connection is compromised.
+"That is, TLS does not provide post-compromise security/future secrecy/backward secrecy with respect to the traffic secret."
+"This is particularly easy when there is a small set of possible messages to be distinguished, such as for a video server hosting a fixed corpus of content, but still provides usable information even in more complicated scenarios."
+TLS does not provide any specific defenses against this form of attack but does include a padding mechanism for use by applications:
+"The plaintext protected by the AEAD function consists of content plus variable-length padding, which allows the application to produce arbitrary-length encrypted records as well as padding-only cover traffic to conceal the difference between periods of transmission and periods of silence."
+"Because the padding is encrypted alongside the actual content, an attacker cannot directly determine the length of the padding but may be able to measure it indirectly by the use of timing channels exposed during record processing (i.e., seeing how long it takes to process a record or trickling in records to see known how to remove all of these channels because even a constant-time padding removal function will likely feed the content into data-dependent functions."
+Note: Robust traffic analysis defenses will likely lead to inferior performance due to delays in transmitting packets and increased traffic volume.
+"In general, TLS does not have specific defenses against side-channel attacks (i.e., those which attack the communications via secondary channels such as timing), leaving those to the implementation of the relevant cryptographic primitives."
+"-  TLS uses a uniform ""bad_record_mac"" alert for all decryption errors, which is intended to prevent an attacker from gaining piecewise insight into portions of the message."
+Resistance to side-channel attacks depends on applications and application protocols separately ensuring that confidential information is not inadvertently leaked.
+"Potential attacks include: -  Duplication of actions which cause side effects (e.g., purchasing an item or transferring money) to be duplicated, thus harming the site or the user."
+"-  Attackers can store and replay 0-RTT messages in order to reorder them with respect to other messages (e.g., moving a delete to after a create)."
+"-  Exploiting cache timing behavior to discover the content of 0-RTT messages by replaying a 0-RTT message to a different cache node and then using a separate connection to measure request latency, to see if the two requests address the same resource."
+"If data can be replayed a large number of times, additional attacks become possible, such as making repeated measurements of the speed of cryptographic operations."
+"Ultimately, servers have the responsibility to protect themselves against attacks employing 0-RTT data replication."
+The mechanisms described in Section 8 are intended to prevent replay at the TLS layer but do not provide complete protection against receiving multiple copies of client data.
+"TLS 1.3 falls back to the 1-RTT handshake when the server does not have any information about the client, e.g., because it is in a different cluster which does not share state or because the ticket has been deleted as described in Section 8.1."
+"If the application-layer protocol retransmits data in this setting, then it is possible for an attacker to induce message duplication by sending the ClientHello to both the original cluster (which processes the data immediately) and another cluster which will fall back to 1-RTT and process the data upon application-layer replay."
+"The scale of this attack is limited by the client's willingness to retry transactions and therefore only allows a limited amount of duplication, with each copy appearing as a new connection at the server."
+"and 8.2 prevent a replayed ClientHello and its associated 0-RTT data from being accepted multiple times by any cluster with consistent state; for servers which limit the use of 0-RTT to one cluster for a single ticket, then a given ClientHello and its associated 0-RTT data will only be accepted once."
+"However, if state is not completely consistent, then an attacker might be able to have multiple copies of the data be accepted during the replication window."
+"Because clients do not know the exact details of server behavior, they MUST NOT send messages in early data which are not safe to have replayed and which they would not be willing to retry across multiple 1-RTT connections."
+Application protocols MUST NOT use 0-RTT data without a profile that defines its use.
+That profile needs to identify which messages or interactions are safe to use with 0-RTT and how to handle the situation when the server rejects 0-RTT and falls back to 1-RTT.
+"In addition, to avoid accidental misuse, TLS implementations MUST NOT enable 0-RTT (either sending or accepting) unless specifically requested by the application and MUST NOT automatically resend 0-RTT data if it is rejected by the server unless instructed by the application."
+"Server-side applications may wish to implement special processing for 0-RTT data for some kinds of application traffic (e.g., abort the connection, request that data be resent at the application layer, or delay processing until the handshake completes)."
+"In particular, if these exporters are used as an authentication channel binding (e.g., by signing the output of the exporter), an attacker who compromises the PSK can transplant authenticators between connections without compromising the authentication key."
+"Because implementations respond to an invalid PSK binder by aborting the handshake, it may be possible for an attacker to verify whether a given PSK identity is valid."
+"Specifically, if a server accepts both external-PSK handshakes and certificate-based handshakes, a valid PSK identity will result in a failed handshake, whereas an invalid identity will just be skipped and result in a successful certificate handshake."
+"Thus, any PSK which is used with both TLS 1.2 and TLS 1.3 must be used with only one hash in TLS 1.3, which is less than optimal if users want to provision a single PSK."
+"While there is no known way in which the same PSK might produce related output in both versions, only limited analysis has been done."
