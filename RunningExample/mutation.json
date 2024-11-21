@@ -1,0 +1,8 @@
+{
+    "message_sender": "Client",
+    "message_type": "ClientHello",
+    "message_response_reference"(optional): "Servers MUST NOT select a key exchange mode that is not listed by the client.",
+    "message_expected_response": "Server rejects the ClientHello with an illegal_parameter alert.",
+    "mutation_strategy": "Set an incompatible key exchange mode in the ClientHello to test server's rejection of invalid modes.",
+    "mutation_field": "psk_key_exchange_modes"
+}
